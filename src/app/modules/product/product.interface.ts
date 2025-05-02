@@ -8,5 +8,6 @@ export type TProduct = {
   city: string;
   description: string;
   image: string;
+  priceType: string;
   sallerId: Types.ObjectId;
 };

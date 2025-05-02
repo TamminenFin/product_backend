@@ -148,7 +148,7 @@ const getProducts = catchAsync(async (req, res) => {
 
   // Ensure `page` and `limit` are strings or provide a default
   const parsedPage = parseInt(page as string, 10) || 1;
-  const parsedLimit = parseInt(limit as string, 10) || 3;
+  const parsedLimit = parseInt(limit as string, 20) || 20;
 
   const activeUsers = await Users.find({
     status: "Active",

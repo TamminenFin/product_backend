@@ -39,4 +39,6 @@ route.put(
   userController.addTransactionId
 );
 
+route.delete("/saller/remove/:id", auth("admin"), userController.deleteUser);
+
 export const authRouter = route;

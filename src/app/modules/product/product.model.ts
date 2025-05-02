@@ -9,6 +9,7 @@ const productSchema = new Schema<TProduct>(
     city: { type: String, required: true },
     description: { type: String, required: true },
     image: { type: String, required: true },
+    priceType: { type: String, required: true },
     price: { type: Number, required: true },
     sallerId: { type: Schema.Types.ObjectId, required: true, ref: "Users" },
   },

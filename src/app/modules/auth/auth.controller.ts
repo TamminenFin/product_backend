@@ -5,10 +5,8 @@ import { userServices } from "./auth.service";
 import config from "../../config";
 import { Users } from "./auth.modal";
 import Product from "../product/product.model";
-import { startSession, Types } from "mongoose";
+import mongoose, { startSession, Types } from "mongoose";
 import AppError from "../../errors/AppError";
-import { TCategory } from "../category/category.interface";
-import sendEmail from "../../utils/sendMails";
 
 const createUser = catchAsync(async (req, res) => {
   const result = await userServices.createUserIntoDb(req.body);
@@ -283,6 +281,48 @@ const addTransactionId = catchAsync(async (req, res) => {
   });
 });
 
+const deleteUser = catchAsync(async (req, res) => {
+  const session = await mongoose.startSession();
+
+  try {
+    session.startTransaction();
+
+    const id = req.params.id;
+
+    // Delete the user
+    const user = await Users.findByIdAndDelete(id, { session });
+
+    if (!user) {
+      throw new AppError(httpStatus.NOT_FOUND, "User not found");
+    }
+
+    // Delete the user's products
+    await Product.deleteMany(
+      { sallerId: new Types.ObjectId(id) }, // use correct field name (you wrote "userId" but your TProduct has "sallerId")
+      { session }
+    );
+
+    await session.commitTransaction();
+    session.endSession();
+
+    sendResponse(res, {
+      data: user,
+      success: true,
+      statusCode: httpStatus.OK,
+      message: `User "${user.name}" and related products deleted successfully.`,
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Unexpected error, please try again"
+    );
+  }
+});
+
 export const userController = {
   createUser,
   loginUser,
@@ -295,4 +335,5 @@ export const userController = {
   addCategoryToSallerandSendEmail,
   getDeadlineComingSaller,
   addTransactionId,
+  deleteUser,
 };
