@@ -110,7 +110,6 @@ const updateProduct = catchAsync(async (req, res) => {
   const payload: TProduct = {
     ...data,
     image,
-    sallerId: req?.user?._id,
   };
   const result = await Product.findByIdAndUpdate(
     req.params.id,
