@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Recordatorio de vencimiento de suscripción</title>
+    <style>
+      body {
+        font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        background-color: #f4f4f5;
+        padding: 20px;
+        margin: 0;
+      }
+      .container {
+        max-width: 600px;
+        background-color: #ffffff;
+        padding: 30px;
+        border-radius: 8px;
+        margin: 0 auto;
+      }
+      .title {
+        color: #1f2937;
+        margin-bottom: 10px;
+      }
+      .text {
+        font-size: 16px;
+        color: #374151;
+        margin-bottom: 16px;
+        line-height: 1.6;
+      }
+      .section-title {
+        font-size: 18px;
+        color: #111827;
+        margin-top: 20px;
+        margin-bottom: 10px;
+      }
+      .list {
+        padding-left: 20px;
+        color: #374151;
+      }
+      .footer {
+        margin-top: 30px;
+        font-size: 14px;
+        color: #6b7280;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2 class="title">Hola <%= name %> 👋</h2>
+
+      <p class="text">
+        Tu tienda <strong>"<%= shopName %>"</strong> tiene una suscripción que
+        vence el <strong><%= subEndDate %></strong>. Solo quedan
+        <strong><%= daysLeft %></strong> días antes del vencimiento.
+      </p>
+
+      <div class="section-title">🧾 Detalles de tu suscripción:</div>
+      <ul class="list">
+        <li>Categorías activas: <strong><%= categoryCount %></strong></li>
+        <li>Monto mensual a pagar: <strong>S/ <%= needPay %></strong></li>
+      </ul>
+
+      <p class="text">
+        Por favor, ten en cuenta esta información para evitar cualquier
+        interrupción en el servicio.
+      </p>
+
+      <p class="footer">
+        Gracias por confiar en nosotros.<br />
+        — El equipo de Campic
+      </p>
+    </div>
+  </body>
+</html>

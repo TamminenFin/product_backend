@@ -2,40 +2,27 @@ import httpStatus from "http-status";
 import catchAsync from "../../utils/catchAsync";
 import sendResponse from "../../utils/sendResponse";
 import { userServices } from "./auth.service";
-import config from "../../config";
 import { Users } from "./auth.modal";
 import Product from "../product/product.model";
 import mongoose, { startSession, Types } from "mongoose";
 import AppError from "../../errors/AppError";
+import dayjs from "dayjs";
+import sendEmail from "../../utils/sendMails";
 
 const createUser = catchAsync(async (req, res) => {
   const result = await userServices.createUserIntoDb(req.body);
-  const { refreshToken, accessToken } = result;
-
-  res.cookie("refreshToken", refreshToken, {
-    secure: config.node_env === "production",
-    httpOnly: true,
-  });
-
   sendResponse(res, {
-    data: {
-      accessToken,
-      refreshToken,
-    },
+    data: result,
     success: true,
     statusCode: httpStatus.OK,
-    message: "User registered successfully",
+    message: "Create account sucessfully!",
   });
 });
 
 const loginUser = catchAsync(async (req, res) => {
-  const result = await userServices.loginUserIntoDb(req.body);
-  const { refreshToken, accessToken } = result;
-
-  res.cookie("refreshToken", refreshToken, {
-    secure: true,
-    httpOnly: true,
-  });
+  const { accessToken, refreshToken } = await userServices.loginUserIntoDb(
+    req.body
+  );
   sendResponse(res, {
     data: { accessToken, refreshToken },
     success: true,
@@ -47,12 +34,11 @@ const loginUser = catchAsync(async (req, res) => {
 const refreshToken = catchAsync(async (req, res) => {
   const refreshToken = req.headers["x-refresh-token"];
   const result = await userServices.refreshToken(refreshToken as string);
-
   sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "Access token retrieved successfully!",
     data: result,
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Access token retrive successfully!",
   });
 });
 
@@ -169,7 +155,7 @@ const addCategoryToSaller = catchAsync(async (req, res) => {
 });
 
 const getCurrentSaller = catchAsync(async (req, res) => {
-  const result = await Users.findById(req?.user?._id);
+  const result = await Users.findById(req?.params.id);
   sendResponse(res, {
     data: result,
     success: true,
@@ -231,6 +217,8 @@ const acceptRequest = catchAsync(async (req, res) => {
       status: "Active",
       subStartDate: req.body?.startDate,
       subEndDate: req.body?.endDate,
+      lastEmailSentDate: null,
+      last14DaysEmaiSendDate: null,
     },
     {
       new: true,
@@ -323,6 +311,190 @@ const deleteUser = catchAsync(async (req, res) => {
   }
 });
 
+const updateSallerProfile = catchAsync(async (req, res) => {
+  const result = await Users.findByIdAndUpdate(
+    req.user?._id,
+    {
+      $set: {
+        ...req.body,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: httpStatus.OK,
+    message: `Update profile sucessfully!.`,
+  });
+});
+const updateSallerProfileByAdmin = catchAsync(async (req, res) => {
+  const result = await Users.findByIdAndUpdate(
+    req.params.id,
+    {
+      $set: {
+        ...req.body,
+      },
+    },
+    {
+      new: true,
+    }
+  );
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: httpStatus.OK,
+    message: `Update profile sucessfully!.`,
+  });
+});
+
+const getAllSallerNeedToReminde = catchAsync(async (req, res) => {
+  const today = dayjs();
+  const inSevenDays = today.add(7, "day").toDate();
+  const inFourteenDays = today.add(14, "day").toDate();
+
+  const usersToNotify = await Users.find({
+    subEndDate: { $gte: today.toDate(), $lte: inFourteenDays },
+    $or: [
+      // ✅ Case 1: Sub ends in 7 days AND no 7-day email sent
+      {
+        $and: [
+          { subEndDate: { $lte: inSevenDays } },
+          {
+            $or: [
+              { lastEmailSentDate: { $exists: false } },
+              { lastEmailSentDate: null },
+            ],
+          },
+        ],
+      },
+      // ✅ Case 2: Sub ends in 8–14 days AND no 14-day email sent
+      {
+        $and: [
+          { subEndDate: { $gt: inSevenDays, $lte: inFourteenDays } },
+          {
+            $or: [
+              { last14DaysEmaiSendDate: { $exists: false } },
+              { last14DaysEmaiSendDate: null },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+
+  sendResponse(res, {
+    data: usersToNotify,
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Fetched users who need to be notified successfully!",
+  });
+});
+
+const sendEmailForNotify = catchAsync(async (req, res) => {
+  const user = await Users.findById(req.body?.id);
+
+  if (!user) {
+    throw new AppError(httpStatus.NOT_FOUND, "Usuario no encontrado.");
+  }
+
+  if (!user.subEndDate) {
+    throw new AppError(
+      httpStatus.BAD_REQUEST,
+      "Este usuario no tiene fecha de fin de suscripción."
+    );
+  }
+
+  const daysLeft = dayjs(user.subEndDate).diff(dayjs(), "day");
+
+  let result;
+
+  if (daysLeft <= 7 && daysLeft >= 0) {
+    // Sub ends in 7 days or less - send 7 days reminder email only if not sent yet
+    if (!user.lastEmailSentDate) {
+      await sendEmail({
+        email: user.email,
+        subject: "Recordatorio: tu suscripción vence en 7 días",
+        template: "send-14-days-reminder-email.ejs",
+        data: {
+          name: user.name,
+          shopName: user.shopName,
+          subEndDate: user.subEndDate.toDateString(),
+          daysLeft,
+          categoryCount: user?.categories?.length || 0,
+          needPay: (user?.categories?.length || 0) * 10,
+        },
+      });
+      result = await Users.findByIdAndUpdate(
+        user._id,
+        { lastEmailSentDate: new Date() },
+        { new: true }
+      );
+    } else {
+      result = user; // Email already sent, no update needed
+    }
+  } else if (daysLeft > 7 && daysLeft <= 14) {
+    // Sub ends in 8-14 days - send 14 days reminder email only if not sent yet
+    if (!user.last14DaysEmaiSendDate) {
+      await sendEmail({
+        email: user.email,
+        subject: "Recordatorio: tu suscripción vence en 14 días",
+        template: "subscription-reminder.ejs",
+        data: {
+          name: user.name,
+          shopName: user.shopName,
+          subEndDate: user.subEndDate.toDateString(),
+          daysLeft,
+          categoryCount: user?.categories?.length || 0,
+          needPay: (user?.categories?.length || 0) * 10,
+        },
+      });
+      result = await Users.findByIdAndUpdate(
+        user._id,
+        { last14DaysEmaiSendDate: new Date() },
+        { new: true }
+      );
+    } else {
+      result = user; // Email already sent, no update needed
+    }
+  } else {
+    // Subscription ends after more than 14 days or already expired, no email sent
+    result = user;
+  }
+
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "Correo de recordatorio enviado correctamente si era necesario.",
+  });
+});
+
+const forgtPassword = catchAsync(async (req, res) => {
+  const { email } = req.body;
+  const result = await userServices.forgtPassword(email);
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: httpStatus.OK,
+    message:
+      "¡Te enviaremos las instrucciones para restablecer tu contraseña a tu correo electrónico!",
+  });
+});
+
+const changePassword = catchAsync(async (req, res) => {
+  const { token, password } = req.body;
+  const result = await userServices.changePassword(token, password);
+  sendResponse(res, {
+    data: result,
+    success: true,
+    statusCode: httpStatus.OK,
+    message: "¡Tu contraseña ha sido cambiada exitosamente!",
+  });
+});
+
 export const userController = {
   createUser,
   loginUser,
@@ -336,4 +508,10 @@ export const userController = {
   getDeadlineComingSaller,
   addTransactionId,
   deleteUser,
+  updateSallerProfile,
+  updateSallerProfileByAdmin,
+  getAllSallerNeedToReminde,
+  sendEmailForNotify,
+  forgtPassword,
+  changePassword,
 };

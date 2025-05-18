@@ -16,7 +16,11 @@ route.put(
 
 route.put("/add-category", auth("saller"), userController.addCategoryToSaller);
 
-route.get("/current-saller", auth("saller"), userController.getCurrentSaller);
+route.get(
+  "/current-saller/:id",
+  auth("saller", "admin"),
+  userController.getCurrentSaller
+);
 
 route.get("/sallers", userController.getAllSallers);
 route.get(
@@ -40,5 +44,30 @@ route.put(
 );
 
 route.delete("/saller/remove/:id", auth("admin"), userController.deleteUser);
+route.put(
+  "/saller/update",
+  auth("saller", "admin"),
+  userController.updateSallerProfile
+);
+route.put(
+  "/saller/update/:id",
+  auth("admin"),
+  userController.updateSallerProfileByAdmin
+);
+
+route.get(
+  "/saller/reminder",
+  auth("admin"),
+  userController.getAllSallerNeedToReminde
+);
+
+route.patch(
+  "/send-notify-email",
+  auth("admin"),
+  userController.sendEmailForNotify
+);
+
+route.post("/forgot-password", userController.forgtPassword);
+route.post("/change-password", userController.changePassword);
 
 export const authRouter = route;

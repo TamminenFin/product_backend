@@ -1,0 +1,105 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background-color: #f5f5f5;
+        color: #333;
+        padding: 20px;
+      }
+
+      .container {
+        background-color: #ffffff;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 30px;
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+      }
+
+      .header {
+        text-align: center;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+      }
+
+      .header img {
+        width: 120px;
+        margin-bottom: 10px;
+      }
+
+      .header h1 {
+        color: #4caf50;
+        font-size: 22px;
+        margin: 0;
+      }
+
+      .content {
+        line-height: 1.6;
+      }
+
+      .footer {
+        margin-top: 30px;
+        font-size: 13px;
+        color: #888;
+        text-align: center;
+      }
+
+      .contact {
+        margin-top: 20px;
+        font-weight: bold;
+        font-size: 16px;
+        text-align: center;
+        color: #333;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <!-- Company Logo -->
+        <img
+          src="https://res.cloudinary.com/ddhb3f9rg/image/upload/v1747111614/jjkc61bqhkqgcbiyb38x.png"
+          alt="Company Logo"
+        />
+        <h1>Subscription Expiry Notice</h1>
+      </div>
+
+      <div class="content">
+        <p>Dear <strong><%= name %></strong>,</p>
+
+        <p>
+          We hope you're enjoying your experience with
+          <strong><%= shopName %></strong>.
+        </p>
+
+        <p>
+          This is a friendly reminder that your subscription is set to expire on
+          <strong><%= subEndDate %></strong>, which is in
+          <strong><%= daysLeft %></strong> day(s).
+        </p>
+
+        <p>
+          To avoid any service interruption, please contact our support team to
+          renew your subscription.
+        </p>
+
+        <div class="contact">📞 Contact us: +880 1234-567890</div>
+
+        <p style="margin-top: 20px">
+          If you've already renewed your subscription, kindly ignore this
+          message.
+        </p>
+
+        <p>Thank you for being with us!</p>
+      </div>
+
+      <div class="footer">
+        &copy; <%= new Date().getFullYear() %> Campic. All rights reserved.
+      </div>
+    </div>
+  </body>
+</html>

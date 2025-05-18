@@ -25,6 +25,9 @@ const userSchema = new Schema<TUser>(
     transactionId: { type: String, required: false },
     subStartDate: { type: Date },
     subEndDate: { type: Date },
+    showEmail: { type: Boolean, required: true },
+    lastEmailSentDate: { type: Date, default: null },
+    last14DaysEmaiSendDate: { type: Date, default: null },
   },
   {
     timestamps: true,

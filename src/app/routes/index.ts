@@ -5,6 +5,7 @@ import { productRoute } from "../modules/product/product.route";
 import { dashboardRoute } from "../modules/dashboard/dashboard.route";
 import { pricingRoute } from "../modules/pricing/pricing.route";
 import { requestRoute } from "../modules/request/request.route";
+import { cityRouter } from "../modules/city/city.route";
 
 const router = Router();
 
@@ -32,6 +33,10 @@ const moduleRoutes = [
   {
     path: "/request",
     route: requestRoute,
+  },
+  {
+    path: "/city",
+    route: cityRouter,
   },
 ];
 

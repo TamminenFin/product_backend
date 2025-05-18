@@ -16,7 +16,10 @@ export interface TUser extends Document {
   shopId?: string;
   subStartDate?: Date;
   subEndDate?: Date;
+  showEmail: boolean;
   phone: string;
+  lastEmailSentDate?: Date | null;
+  last14DaysEmaiSendDate?: Date | null;
   transactionId?: string;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }

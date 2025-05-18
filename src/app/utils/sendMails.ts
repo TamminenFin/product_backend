@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import nodemailer from "nodemailer";
 import ejs from "ejs";
 import path from "path";
@@ -27,7 +28,7 @@ const sendEmail = async (options: EmailOption): Promise<void> => {
     const html: string = await ejs.renderFile(templatePath, data);
 
     const mailOption = {
-      from: config.smtp_mail,
+      from: "Lastiendas.pe",
       to: email,
       subject,
       html,

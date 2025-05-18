@@ -23,7 +23,7 @@ route.get("/:id", productController.getSingleProduct);
 route.post(
   "/update-product/:id",
   multerUpload.single("image"),
-  auth("saller"),
+  auth("saller", "admin"),
   productController.updateProduct
 );
 route.delete(
@@ -34,5 +34,10 @@ route.delete(
 
 route.get("/", productController.getProducts);
 route.get("/saller/:id", auth("admin"), productController.getSallerProduct);
+route.get(
+  "/product-details/:id",
+  auth("admin"),
+  productController.getProductDetailsWithSDallerData
+);
 
 export const productRoute = route;

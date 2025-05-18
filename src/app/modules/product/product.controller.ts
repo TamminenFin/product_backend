@@ -82,7 +82,10 @@ const getAllProducts = catchAsync(async (req, res) => {
 });
 
 const getSingleProduct = catchAsync(async (req, res) => {
-  const result = await Product.findById(req?.params?.id).populate("sallerId");
+  const result = await Product.findById(req?.params?.id).populate(
+    "sallerId",
+    "email phone address showEmail shopName"
+  );
   sendResponse(res, {
     data: result,
     success: true,
@@ -259,6 +262,19 @@ const getSallerProduct = catchAsync(async (req, res) => {
   });
 });
 
+const getProductDetailsWithSDallerData = catchAsync(async (req, res) => {
+  const result = await Product.findById(req.params.id).populate(
+    "sallerId",
+    "categories"
+  );
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    data: result,
+    message: "Products fetched successfully!",
+  });
+});
+
 export const productController = {
   createProduct,
   getAllProducts,
@@ -268,4 +284,5 @@ export const productController = {
   getProducts,
   getProductsBySearch,
   getSallerProduct,
+  getProductDetailsWithSDallerData,
 };
